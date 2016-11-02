@@ -24,19 +24,17 @@
 *  International Registered Trademark & Property of PrestaShop SA
 */
 
-use PrestaShop\PrestaShop\Core\Module\WidgetInterface;
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-class Ps_DataPrivacy extends Module implements WidgetInterface
+class Ps_Dataprivacy extends Module
 {
+    protected $templateFile;
+
     public function __construct()
     {
         $this->name = 'ps_dataprivacy';
-        $this->tab = 'front_office_features';
-
         $this->version = '1.0.0';
         $this->author = 'PrestaShop';
         $this->need_instance = 0;
@@ -44,21 +42,13 @@ class Ps_DataPrivacy extends Module implements WidgetInterface
         $this->bootstrap = true;
         parent::__construct();
 
-        $this->displayName = $this->trans(
-            'Customer data privacy block',
-            array(),
-            'Modules.Dataprivacy.Admin'
-        );
+        $this->displayName = $this->trans('Customer data privacy block', array(), 'Modules.Dataprivacy.Admin');
         $this->description = $this->trans(
-            'Adds a block displaying a message about a customer\'s' .
-            ' privacy data.',
+            'Adds a block displaying a message about a customer\'s privacy data.',
             array(),
             'Modules.Dataprivacy.Admin'
         );
-        $this->ps_versions_compliancy = array(
-            'min' => '1.7.0.0',
-            'max' => _PS_VERSION_,
-        );
+        $this->ps_versions_compliancy = array('min' => '1.7.0.0', 'max' => _PS_VERSION_);
 
         $this->_html = '';
     }
@@ -66,38 +56,17 @@ class Ps_DataPrivacy extends Module implements WidgetInterface
     public function install()
     {
         $return = (parent::install()
-                    && $this->registerHook('displayCustomerAccountForm')
+                    && $this->registerHook('additionalCustomerFormFields')
                     && $this->registerHook('actionSubmitAccountBefore'));
 
-        include 'fixtures.php'; // get Fixture array
-        $languages = Language::getLanguages();
-        $conf_keys = array('CUSTPRIV_MSG_AUTH', 'CUSTPRIV_MSG_IDENTITY');
-        foreach ($conf_keys as $conf_key) {
-            foreach ($languages as $lang) {
-                if (isset($fixtures[$conf_key][$lang['language_code']])) {
-                    Configuration::updateValue($conf_key, array(
-                        $lang['id_lang'] =>
-                            $fixtures[$conf_key][$lang['language_code']],
-                    ));
-                } else {
-                    Configuration::updateValue($conf_key, array(
-                        $lang['id_lang'] =>
-                            'The personal data you provide is used to answer' .
-                            ' queries, process orders or allow access to' .
-                            ' specific information. You have the right to' .
-                            ' modify and delete all the personal information' .
-                            ' found in the "My Account" page.'
-                    ));
-                }
-            }
-        }
+        $this->installFixtures();
 
         return $return;
     }
 
     public function uninstall()
     {
-        return ($this->unregisterHook('displayCustomerAccountForm')
+        return ($this->unregisterHook('additionalCustomerFormFields')
                 && $this->unregisterHook('actionBeforeSubmitAccount')
                 && parent::uninstall());
     }
@@ -105,42 +74,22 @@ class Ps_DataPrivacy extends Module implements WidgetInterface
     public function getContent()
     {
         if (Tools::isSubmit('submitCustPrivMess')) {
-            $message_trads = array('auth' => array(), 'identity' => array());
+            $message_trads = array('auth' => array());
             foreach ($_POST as $key => $value) {
                 if (preg_match('/CUSTPRIV_MSG_AUTH_/i', $key)) {
                     $id_lang = preg_split('/CUSTPRIV_MSG_AUTH_/i', $key);
                     $message_trads['auth'][(int)$id_lang[1]] = $value;
-                } elseif (preg_match('/CUSTPRIV_MSG_IDENTITY_/i', $key)) {
-                    $id_lang = preg_split('/CUSTPRIV_MSG_IDENTITY_/i', $key);
-                    $message_trads['identity'][(int)$id_lang[1]] = $value;
                 }
             }
-            Configuration::updateValue(
-                'CUSTPRIV_MSG_AUTH',
-                $message_trads['auth'],
-                true
-            );
-            Configuration::updateValue(
-                'CUSTPRIV_MSG_IDENTITY',
-                $message_trads['identity'],
-                true
-            );
 
-            Configuration::updateValue(
-                'CUSTPRIV_AUTH_PAGE',
-                (int)Tools::getValue('CUSTPRIV_AUTH_PAGE')
-            );
-            Configuration::updateValue(
-                'CUSTPRIV_IDENTITY_PAGE',
-                (int)Tools::getValue('CUSTPRIV_IDENTITY_PAGE')
-            );
+            Configuration::updateValue('CUSTPRIV_MSG_AUTH', $message_trads['auth'], true);
 
             $this->_clearCache('*');
             $this->_html .= $this->displayConfirmation(
                 $this->trans(
-                    'Settings updated.',
+                    'The settings have been updated.',
                     array(),
-                    'Admin.Global'
+                    'Admin.Notifications.Success'
                 )
             );
         }
@@ -150,102 +99,36 @@ class Ps_DataPrivacy extends Module implements WidgetInterface
         return $this->_html;
     }
 
-    public function checkConfig($switch_key, $msg_key)
-    {
-        if (!$this->active) {
-            return false;
-        }
-
-        if (!Configuration::get($switch_key)) {
-            return false;
-        }
-
-        $message = Configuration::get($msg_key, $this->context->language->id);
-        if (empty($message)) {
-            return false;
-        }
-
-        return true;
+    protected function _clearCache($template, $cache_id = null, $compile_id = null) {
+        return parent::_clearCache($this->templateFile);
     }
 
-    protected function _clearCache(
-        $template,
-        $cache_id = null,
-        $compile_id = null
-    ) {
-        return parent::_clearCache(
-                    'module:ps_dataprivacy/ps_dataprivacy.tpl'
-                 );
-    }
-
-    public function hookActionSubmitAccountBefore($params)
+    /**
+     * Add an extra FormField to ask for data privacy consent.
+     *
+     * @param $params
+     *
+     * @return bool
+     */
+    public function hookAdditionalCustomerFormFields($params)
     {
-        if (!$this->checkConfig('CUSTPRIV_AUTH_PAGE', 'CUSTPRIV_MSG_AUTH')) {
-            return;
-        }
-
-        if (!Tools::getValue('customer_privacy')) {
-            $this->context->controller->errors[] = $this->trans(
-                'If you agree to the terms in the Customer Data Privacy' .
-                ' message, please click the check box below.',
-                array(),
-                'Modules.Dataprivacy.Admin'
-            );
-            return false;
-        }
-        return true;
-    }
-
-    public function getWidgetVariables($hookName, array $configuration)
-    {
-        if ($this->context->customer->id) {
-            $msgKey = 'CUSTPRIV_MSG_IDENTITY';
-        } else {
-            $msgKey = 'CUSTPRIV_MSG_AUTH';
-        }
+        $label = $this->trans(
+            'Customer data privacy[1][2]%message%[/2]',
+            array(
+                '[1]' => '<br>',
+                '[2]' => '<em>',
+                '%message%' => Configuration::get('CUSTPRIV_MSG_AUTH', $this->context->language->id),
+                '[/2]' => '</em>',
+            ),
+            'Modules.Dataprivacy.Shop'
+        );
 
         return array(
-            'message' => Configuration::get(
-                $msgKey,
-                $this->context->language->id
-            ),
-            'is_logged_in' => null !== $this->context->customer->id,
-        );
-    }
-
-    public function renderWidget($hookName, array $configuration)
-    {
-        if ($this->context->customer->id) {
-            $switchKey = 'CUSTPRIV_IDENTITY_PAGE';
-            $msgKey = 'CUSTPRIV_MSG_IDENTITY';
-        } else {
-            $switchKey = 'CUSTPRIV_AUTH_PAGE';
-            $msgKey = 'CUSTPRIV_MSG_AUTH';
-        }
-
-        $cacheKey = 'ps_dataprivacy|' . $msgKey;
-        $isCached = $this->isCached(
-            'module:ps_dataprivacy/ps_dataprivacy.tpl',
-            $cacheKey
-        );
-
-        if (!$isCached) {
-            if (!$this->checkConfig($switchKey, $msgKey)) {
-                return;
-            }
-
-            $this->smarty->assign(
-                $this->getWidgetVariables(
-                    $hookName,
-                    $configuration
-                )
-            );
-        }
-
-        return $this->fetch(
-            'module:ps_dataprivacy/ps_dataprivacy.tpl',
-            $cacheKey
-        );
+            (new FormField())
+                ->setName('customer_privacy')
+                ->setType('checkbox')
+                ->setLabel($label)
+                ->setRequired(true));
     }
 
     public function renderForm()
@@ -253,131 +136,37 @@ class Ps_DataPrivacy extends Module implements WidgetInterface
         $fields_form = array(
             'form' => array(
                 'legend' => array(
-                    'title' => $this->trans(
-                        'Settings',
-                        array(),
-                        'Admin.Global'
-                    ),
+                    'title' => $this->trans('Settings', array(), 'Admin.Global'),
                     'icon' => 'icon-cogs',
                 ),
                 'input' => array(
-                    array(
-                        'type' => 'switch',
-                        'label' => $this->trans(
-                            'Display on account creation form',
-                            array(),
-                            'Modules.Dataprivacy.Admin'
-                        ),
-                        'name' => 'CUSTPRIV_AUTH_PAGE',
-                        'values' => array(
-                            array(
-                                'id' => 'active_on',
-                                'value' => 1,
-                                'label' => $this->trans(
-                                    'Enabled',
-                                    array(),
-                                    'Admin.Global'
-                                )
-                            ),
-                            array(
-                                'id' => 'active_off',
-                                'value' => 0,
-                                'label' => $this->trans(
-                                    'Disabled',
-                                    array(),
-                                    'Admin.Global'
-                                )
-                            ),
-                        ),
-                    ),
                     array(
                         'type' => 'textarea',
                         'lang' => true,
                         'autoload_rte' => true,
                         'label' => $this->trans(
-                            'Customer data privacy message for account' .
-                            ' creation form:',
+                            'Customer data privacy message for customer form:',
                             array(),
                             'Modules.Dataprivacy.Admin'
                         ),
                         'name' => 'CUSTPRIV_MSG_AUTH',
                         'desc' => $this->trans('The customer data privacy' .
-                            ' message will be displayed in the account' .
-                            ' creation form.',
+                            ' message will be displayed in the customer form',
                             array(),
                             'Modules.Dataprivacy.Admin'
                             ) . '<br>' . $this->trans(
                             'Tip: If the customer privacy message is too' .
                             ' long to be written directly in the form,' .
                             ' you can add a link to one of your pages.' .
-                            ' This can easily be created via the "CMS"' .
-                            ' page under the "Preferences" menu.',
-                            array(),
-                            'Modules.Dataprivacy.Admin'
-                        ),
-                    ),
-                    array(
-                        'type' => 'switch',
-                        'label' => $this->trans(
-                            'Display in customer area',
-                            array(),
-                            'Modules.Dataprivacy.Admin'
-                        ),
-                        'name' => 'CUSTPRIV_IDENTITY_PAGE',
-                        'values' => array(
-                            array(
-                                'id' => 'active_on',
-                                'value' => 1,
-                                'label' => $this->trans(
-                                    'Enabled',
-                                    array(),
-                                    'Admin.Global'
-                                ),
-                            ),
-                            array(
-                                'id' => 'active_off',
-                                'value' => 0,
-                                'label' => $this->trans(
-                                    'Disabled',
-                                    array(),
-                                    'Admin.Global'
-                                ),
-                            ),
-                        ),
-                    ),
-                    array(
-                        'type' => 'textarea',
-                        'lang' => true,
-                        'autoload_rte' => true,
-                        'label' => $this->trans(
-                            'Customer data privacy message for customer area:',
-                            array(),
-                            'Modules.Dataprivacy.Admin'
-                        ),
-                        'name' => 'CUSTPRIV_MSG_IDENTITY',
-                        'desc' => $this->trans(
-                            'The customer data privacy message will be' .
-                            ' displayed in the "Personal information" page,' .
-                            ' in the customer area.',
-                            array(),
-                            'Modules.Dataprivacy.Admin'
-                            ) . '<br>' . $this->trans(
-                            'Tip: If the customer privacy message is too' .
-                            ' long to be written directly on the page,' .
-                            ' you can add a link to one of your other' .
-                            ' pages. This can easily be created via the' .
-                            ' "CMS" page under the "Preferences" menu.',
+                            ' This can easily be created via the "Pages"' .
+                            ' page under the "Design" menu.',
                             array(),
                             'Modules.Dataprivacy.Admin'
                         ),
                     ),
                 ),
                 'submit' => array(
-                    'title' => $this->trans(
-                        'Save',
-                        array(),
-                        'Admin.Actions'
-                    ),
+                    'title' => $this->trans('Save', array(), 'Admin.Actions'),
                 ),
             ),
         );
@@ -416,33 +205,45 @@ class Ps_DataPrivacy extends Module implements WidgetInterface
     {
         $return = array();
 
-        $return['CUSTPRIV_AUTH_PAGE'] = (int)Configuration::get(
-            'CUSTPRIV_AUTH_PAGE'
-        );
-        $return['CUSTPRIV_IDENTITY_PAGE'] = (int)Configuration::get(
-            'CUSTPRIV_IDENTITY_PAGE'
-        );
-
         $languages = Language::getLanguages(false);
         foreach ($languages as $lang) {
             $return['CUSTPRIV_MSG_AUTH'][(int)$lang['id_lang']] =
                 Tools::getValue(
-                    'CUSTPRIV_MSG_AUTH_' . (int)$lang['id_lang'],
-                    Configuration::get(
-                        'CUSTPRIV_MSG_AUTH',
-                        (int)$lang['id_lang']
-                    )
-                );
-            $return['CUSTPRIV_MSG_IDENTITY'][(int)$lang['id_lang']] =
-                Tools::getValue(
-                    'CUSTPRIV_MSG_IDENTITY_' . (int)$lang['id_lang'],
-                    Configuration::get(
-                        'CUSTPRIV_MSG_IDENTITY',
-                        (int)$lang['id_lang']
-                    )
+                    'CUSTPRIV_MSG_AUTH_'.(int)$lang['id_lang'],
+                    Configuration::get('CUSTPRIV_MSG_AUTH', (int)$lang['id_lang'])
                 );
         }
 
         return $return;
+    }
+
+    private function installFixtures()
+    {
+        $fixtures = array(
+            "CUSTPRIV_MSG_AUTH" => array(
+                'fr-fr' => "Conformément aux dispositions de la loi du n°78-17 du 6 janvier 1978, vous disposez d'un droit d'accès, de rectification et d'opposition sur les données nominatives vous concernant.",
+            ),
+        );
+        $languages = Language::getLanguages();
+        $conf_keys = array('CUSTPRIV_MSG_AUTH');
+        foreach ($conf_keys as $conf_key) {
+            foreach ($languages as $lang) {
+                if (isset($fixtures[$conf_key][$lang['language_code']])) {
+                    Configuration::updateValue($conf_key, array(
+                        $lang['id_lang'] =>
+                            $fixtures[$conf_key][$lang['language_code']],
+                    ));
+                } else {
+                    Configuration::updateValue($conf_key, array(
+                        $lang['id_lang'] =>
+                            'The personal data you provide is used to answer' .
+                            ' queries, process orders or allow access to' .
+                            ' specific information. You have the right to' .
+                            ' modify and delete all the personal information' .
+                            ' found in the "My Account" page.'
+                    ));
+                }
+            }
+        }
     }
 }
