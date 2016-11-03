@@ -35,8 +35,8 @@ class Ps_Dataprivacy extends Module
     public function __construct()
     {
         $this->name = 'ps_dataprivacy';
-        $this->version = '1.0.0';
         $this->author = 'PrestaShop';
+        $this->version = '1.0.0';
         $this->need_instance = 0;
 
         $this->bootstrap = true;
@@ -48,33 +48,32 @@ class Ps_Dataprivacy extends Module
             array(),
             'Modules.Dataprivacy.Admin'
         );
-        $this->ps_versions_compliancy = array('min' => '1.7.0.0', 'max' => _PS_VERSION_);
 
-        $this->_html = '';
+        $this->ps_versions_compliancy = array('min' => '1.7.0.0', 'max' => _PS_VERSION_);
     }
 
     public function install()
     {
-        $return = (parent::install()
-                    && $this->registerHook('additionalCustomerFormFields')
-                    && $this->registerHook('actionSubmitAccountBefore'));
-
-        $this->installFixtures();
-
-        return $return;
+        return (parent::install()
+            && $this->registerHook('additionalCustomerFormFields')
+            && $this->registerHook('actionSubmitAccountBefore')
+            && $this->installFixtures());
     }
 
     public function uninstall()
     {
         return ($this->unregisterHook('additionalCustomerFormFields')
-                && $this->unregisterHook('actionBeforeSubmitAccount')
-                && parent::uninstall());
+            && $this->unregisterHook('actionBeforeSubmitAccount')
+            && parent::uninstall());
     }
 
     public function getContent()
     {
+        $output = '';
+
         if (Tools::isSubmit('submitCustPrivMess')) {
             $message_trads = array('auth' => array());
+
             foreach ($_POST as $key => $value) {
                 if (preg_match('/CUSTPRIV_MSG_AUTH_/i', $key)) {
                     $id_lang = preg_split('/CUSTPRIV_MSG_AUTH_/i', $key);
@@ -85,21 +84,15 @@ class Ps_Dataprivacy extends Module
             Configuration::updateValue('CUSTPRIV_MSG_AUTH', $message_trads['auth'], true);
 
             $this->_clearCache('*');
-            $this->_html .= $this->displayConfirmation(
-                $this->trans(
-                    'The settings have been updated.',
-                    array(),
-                    'Admin.Notifications.Success'
-                )
-            );
+
+            $output .= $this->displayConfirmation($this->trans('The settings have been updated.', array(), 'Admin.Notifications.Success'));
         }
 
-        $this->_html .= $this->renderForm();
-
-        return $this->_html;
+        return $output.$this->renderForm();
     }
 
-    protected function _clearCache($template, $cache_id = null, $compile_id = null) {
+    protected function _clearCache($template, $cache_id = null, $compile_id = null)
+    {
         return parent::_clearCache($this->templateFile);
     }
 
@@ -123,12 +116,13 @@ class Ps_Dataprivacy extends Module
             'Modules.Dataprivacy.Shop'
         );
 
-        return array(
-            (new FormField())
-                ->setName('customer_privacy')
-                ->setType('checkbox')
-                ->setLabel($label)
-                ->setRequired(true));
+        $formField = (new FormField())
+            ->setName('customer_privacy')
+            ->setType('checkbox')
+            ->setLabel($label)
+            ->setRequired(true);
+
+        return array($formField);
     }
 
     public function renderForm()
@@ -151,18 +145,18 @@ class Ps_Dataprivacy extends Module
                         ),
                         'name' => 'CUSTPRIV_MSG_AUTH',
                         'desc' => $this->trans('The customer data privacy' .
-                            ' message will be displayed in the customer form',
-                            array(),
-                            'Modules.Dataprivacy.Admin'
+                                ' message will be displayed in the customer form',
+                                array(),
+                                'Modules.Dataprivacy.Admin'
                             ) . '<br>' . $this->trans(
-                            'Tip: If the customer privacy message is too' .
-                            ' long to be written directly in the form,' .
-                            ' you can add a link to one of your pages.' .
-                            ' This can easily be created via the "Pages"' .
-                            ' page under the "Design" menu.',
-                            array(),
-                            'Modules.Dataprivacy.Admin'
-                        ),
+                                'Tip: If the customer privacy message is too' .
+                                ' long to be written directly in the form,' .
+                                ' you can add a link to one of your pages.' .
+                                ' This can easily be created via the "Pages"' .
+                                ' page under the "Design" menu.',
+                                array(),
+                                'Modules.Dataprivacy.Admin'
+                            ),
                     ),
                 ),
                 'submit' => array(
@@ -171,23 +165,17 @@ class Ps_Dataprivacy extends Module
             ),
         );
 
+        $lang = new Language((int)Configuration::get('PS_LANG_DEFAULT'));
+
         $helper = new HelperForm();
         $helper->show_toolbar = false;
         $helper->table =  $this->table;
-        $lang = new Language((int)Configuration::get('PS_LANG_DEFAULT'));
         $helper->default_form_language = $lang->id;
         $helper->allow_employee_form_lang =
-            Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') ?
-            Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') :
-            0;
-        $this->fields_form = array();
-
+            Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') ? Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') : 0;
         $helper->identifier = $this->identifier;
         $helper->submit_action = 'submitCustPrivMess';
-        $helper->currentIndex = $this->context->link->getAdminLink(
-                'AdminModules',
-                false
-            ) .
+        $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false) .
             '&configure=' . $this->name .
             '&tab_module=' . $this->tab .
             '&module_name=' . $this->name;
@@ -206,12 +194,12 @@ class Ps_Dataprivacy extends Module
         $return = array();
 
         $languages = Language::getLanguages(false);
+
         foreach ($languages as $lang) {
-            $return['CUSTPRIV_MSG_AUTH'][(int)$lang['id_lang']] =
-                Tools::getValue(
-                    'CUSTPRIV_MSG_AUTH_'.(int)$lang['id_lang'],
-                    Configuration::get('CUSTPRIV_MSG_AUTH', (int)$lang['id_lang'])
-                );
+            $return['CUSTPRIV_MSG_AUTH'][(int)$lang['id_lang']] = Tools::getValue(
+                'CUSTPRIV_MSG_AUTH_'.(int)$lang['id_lang'],
+                Configuration::get('CUSTPRIV_MSG_AUTH', (int)$lang['id_lang'])
+            );
         }
 
         return $return;
@@ -224,15 +212,13 @@ class Ps_Dataprivacy extends Module
                 'fr-fr' => "Conformément aux dispositions de la loi du n°78-17 du 6 janvier 1978, vous disposez d'un droit d'accès, de rectification et d'opposition sur les données nominatives vous concernant.",
             ),
         );
+
         $languages = Language::getLanguages();
         $conf_keys = array('CUSTPRIV_MSG_AUTH');
         foreach ($conf_keys as $conf_key) {
             foreach ($languages as $lang) {
                 if (isset($fixtures[$conf_key][$lang['language_code']])) {
-                    Configuration::updateValue($conf_key, array(
-                        $lang['id_lang'] =>
-                            $fixtures[$conf_key][$lang['language_code']],
-                    ));
+                    Configuration::updateValue($conf_key, array($lang['id_lang'] => $fixtures[$conf_key][$lang['language_code']]));
                 } else {
                     Configuration::updateValue($conf_key, array(
                         $lang['id_lang'] =>
@@ -245,5 +231,7 @@ class Ps_Dataprivacy extends Module
                 }
             }
         }
+
+        return true;
     }
 }
