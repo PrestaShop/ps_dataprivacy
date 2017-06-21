@@ -49,7 +49,7 @@ class Ps_Dataprivacy extends Module
             'Modules.Dataprivacy.Admin'
         );
 
-        $this->ps_versions_compliancy = array('min' => '1.7.0.0', 'max' => _PS_VERSION_);
+        $this->ps_versions_compliancy = array('min' => '1.7.2.0', 'max' => _PS_VERSION_);
     }
 
     public function install()
@@ -144,16 +144,11 @@ class Ps_Dataprivacy extends Module
                             'Modules.Dataprivacy.Admin'
                         ),
                         'name' => 'CUSTPRIV_MSG_AUTH',
-                        'desc' => $this->trans('The customer data privacy' .
-                                ' message will be displayed in the customer form',
+                        'desc' => $this->trans('The customer data privacy message will be displayed in the customer form',
                                 array(),
                                 'Modules.Dataprivacy.Admin'
                             ) . '<br>' . $this->trans(
-                                'Tip: If the customer privacy message is too' .
-                                ' long to be written directly in the form,' .
-                                ' you can add a link to one of your pages.' .
-                                ' This can easily be created via the "Pages"' .
-                                ' page under the "Design" menu.',
+                                'Tip: If the customer privacy message is too long to be written directly in the form, you can add a link to one of your pages. This can easily be created via the "Pages" page under the "Design" menu.',
                                 array(),
                                 'Modules.Dataprivacy.Admin'
                             ),
@@ -207,29 +202,16 @@ class Ps_Dataprivacy extends Module
 
     private function installFixtures()
     {
-        $fixtures = array(
-            "CUSTPRIV_MSG_AUTH" => array(
-                'fr-fr' => "Conformément aux dispositions de la loi du n°78-17 du 6 janvier 1978, vous disposez d'un droit d'accès, de rectification et d'opposition sur les données nominatives vous concernant.",
-            ),
-        );
-
         $languages = Language::getLanguages();
-        $conf_keys = array('CUSTPRIV_MSG_AUTH');
-        foreach ($conf_keys as $conf_key) {
-            foreach ($languages as $lang) {
-                if (isset($fixtures[$conf_key][$lang['language_code']])) {
-                    Configuration::updateValue($conf_key, array($lang['id_lang'] => $fixtures[$conf_key][$lang['language_code']]));
-                } else {
-                    Configuration::updateValue($conf_key, array(
-                        $lang['id_lang'] =>
-                            'The personal data you provide is used to answer' .
-                            ' queries, process orders or allow access to' .
-                            ' specific information. You have the right to' .
-                            ' modify and delete all the personal information' .
-                            ' found in the "My Account" page.'
-                    ));
-                }
-            }
+
+        foreach ($languages as $lang) {
+            Configuration::updateValue('CUSTPRIV_MSG_AUTH', array(
+                $lang['id_lang'] => $this->trans(
+                    'The personal data you provide is used to answer queries, process orders or allow access to specific information. You have the right to modify and delete all the personal information found in the "My Account" page.',
+                    array(),
+                    'Modules.Dataprivacy.Admin',
+                    $lang['locale'])
+            ));
         }
 
         return true;
