@@ -210,7 +210,7 @@ class Ps_Dataprivacy extends Module
                     'The personal data you provide is used to answer queries, process orders or allow access to specific information. You have the right to modify and delete all the personal information found in the "My Account" page.',
                     [],
                     'Modules.Dataprivacy.Admin',
-                    $lang['locale'])
+                    $lang['locale']),
             ]);
         }
 
