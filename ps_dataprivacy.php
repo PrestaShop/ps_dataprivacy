@@ -42,14 +42,14 @@ class Ps_Dataprivacy extends Module
         $this->bootstrap = true;
         parent::__construct();
 
-        $this->displayName = $this->trans('Customer data privacy block', array(), 'Modules.Dataprivacy.Admin');
+        $this->displayName = $this->trans('Customer data privacy block', [], 'Modules.Dataprivacy.Admin');
         $this->description = $this->trans(
             'Adds a block displaying a message about a customer\'s privacy data.',
-            array(),
+            [],
             'Modules.Dataprivacy.Admin'
         );
 
-        $this->ps_versions_compliancy = array('min' => '1.7.2.0', 'max' => _PS_VERSION_);
+        $this->ps_versions_compliancy = ['min' => '1.7.2.0', 'max' => _PS_VERSION_];
     }
 
     public function install()
@@ -72,7 +72,7 @@ class Ps_Dataprivacy extends Module
         $output = '';
 
         if (Tools::isSubmit('submitCustPrivMess')) {
-            $message_trads = array('auth' => array());
+            $message_trads = ['auth' => []];
 
             foreach ($_POST as $key => $value) {
                 if (preg_match('/CUSTPRIV_MSG_AUTH_/i', $key)) {
@@ -85,7 +85,7 @@ class Ps_Dataprivacy extends Module
 
             $this->_clearCache('*');
 
-            $output .= $this->displayConfirmation($this->trans('The settings have been updated.', array(), 'Admin.Notifications.Success'));
+            $output .= $this->displayConfirmation($this->trans('The settings have been updated.', [], 'Admin.Notifications.Success'));
         }
 
         return $output.$this->renderForm();
@@ -107,12 +107,12 @@ class Ps_Dataprivacy extends Module
     {
         $label = $this->trans(
             'Customer data privacy[1][2]%message%[/2]',
-            array(
+            [
                 '[1]' => '<br>',
                 '[2]' => '<em>',
                 '%message%' => Configuration::get('CUSTPRIV_MSG_AUTH', $this->context->language->id),
                 '[/2]' => '</em>',
-            ),
+            ],
             'Modules.Dataprivacy.Shop'
         );
 
@@ -122,43 +122,43 @@ class Ps_Dataprivacy extends Module
             ->setLabel($label)
             ->setRequired(true);
 
-        return array($formField);
+        return [$formField];
     }
 
     public function renderForm()
     {
-        $fields_form = array(
-            'form' => array(
-                'legend' => array(
-                    'title' => $this->trans('Settings', array(), 'Admin.Global'),
+        $fields_form = [
+            'form' => [
+                'legend' => [
+                    'title' => $this->trans('Settings', [], 'Admin.Global'),
                     'icon' => 'icon-cogs',
-                ),
-                'input' => array(
-                    array(
+                ],
+                'input' => [
+                    [
                         'type' => 'textarea',
                         'lang' => true,
                         'autoload_rte' => true,
                         'label' => $this->trans(
                             'Customer data privacy message for customer form:',
-                            array(),
+                            [],
                             'Modules.Dataprivacy.Admin'
                         ),
                         'name' => 'CUSTPRIV_MSG_AUTH',
                         'desc' => $this->trans('The customer data privacy message will be displayed in the customer form',
-                                array(),
+                                [],
                                 'Modules.Dataprivacy.Admin'
                             ) . '<br>' . $this->trans(
                                 'Tip: If the customer privacy message is too long to be written directly in the form, you can add a link to one of your pages. This can easily be created via the "Pages" page under the "Design" menu.',
-                                array(),
+                                [],
                                 'Modules.Dataprivacy.Admin'
                             ),
-                    ),
-                ),
-                'submit' => array(
-                    'title' => $this->trans('Save', array(), 'Admin.Actions'),
-                ),
-            ),
-        );
+                    ],
+                ],
+                'submit' => [
+                    'title' => $this->trans('Save', [], 'Admin.Actions'),
+                ],
+            ],
+        ];
 
         $lang = new Language((int)Configuration::get('PS_LANG_DEFAULT'));
 
@@ -175,18 +175,18 @@ class Ps_Dataprivacy extends Module
             '&tab_module=' . $this->tab .
             '&module_name=' . $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
-        $helper->tpl_vars = array(
+        $helper->tpl_vars = [
             'fields_value' => $this->getConfigFieldsValues(),
             'languages' => $this->context->controller->getLanguages(),
             'id_language' => $this->context->language->id,
-        );
+        ];
 
-        return $helper->generateForm(array($fields_form));
+        return $helper->generateForm([$fields_form]);
     }
 
     public function getConfigFieldsValues()
     {
-        $return = array();
+        $return = [];
 
         $languages = Language::getLanguages(false);
 
@@ -205,13 +205,13 @@ class Ps_Dataprivacy extends Module
         $languages = Language::getLanguages();
 
         foreach ($languages as $lang) {
-            Configuration::updateValue('CUSTPRIV_MSG_AUTH', array(
+            Configuration::updateValue('CUSTPRIV_MSG_AUTH', [
                 $lang['id_lang'] => $this->trans(
                     'The personal data you provide is used to answer queries, process orders or allow access to specific information. You have the right to modify and delete all the personal information found in the "My Account" page.',
-                    array(),
+                    [],
                     'Modules.Dataprivacy.Admin',
                     $lang['locale'])
-            ));
+            ]);
         }
 
         return true;
