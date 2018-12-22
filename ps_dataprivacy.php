@@ -77,7 +77,7 @@ class Ps_Dataprivacy extends Module
             foreach ($_POST as $key => $value) {
                 if (preg_match('/CUSTPRIV_MSG_AUTH_/i', $key)) {
                     $id_lang = preg_split('/CUSTPRIV_MSG_AUTH_/i', $key);
-                    $message_trads['auth'][(int)$id_lang[1]] = $value;
+                    $message_trads['auth'][(int) $id_lang[1]] = $value;
                 }
             }
 
@@ -160,7 +160,7 @@ class Ps_Dataprivacy extends Module
             ),
         );
 
-        $lang = new Language((int)Configuration::get('PS_LANG_DEFAULT'));
+        $lang = new Language((int) Configuration::get('PS_LANG_DEFAULT'));
 
         $helper = new HelperForm();
         $helper->show_toolbar = false;
@@ -191,9 +191,9 @@ class Ps_Dataprivacy extends Module
         $languages = Language::getLanguages(false);
 
         foreach ($languages as $lang) {
-            $return['CUSTPRIV_MSG_AUTH'][(int)$lang['id_lang']] = Tools::getValue(
-                'CUSTPRIV_MSG_AUTH_'.(int)$lang['id_lang'],
-                Configuration::get('CUSTPRIV_MSG_AUTH', (int)$lang['id_lang'])
+            $return['CUSTPRIV_MSG_AUTH'][(int) $lang['id_lang']] = Tools::getValue(
+                'CUSTPRIV_MSG_AUTH_'.(int) $lang['id_lang'],
+                Configuration::get('CUSTPRIV_MSG_AUTH', (int) $lang['id_lang'])
             );
         }
 
