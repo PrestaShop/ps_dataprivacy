@@ -88,7 +88,7 @@ class Ps_Dataprivacy extends Module
             $output .= $this->displayConfirmation($this->trans('The settings have been updated.', array(), 'Admin.Notifications.Success'));
         }
 
-        return $output.$this->renderForm();
+        return $output . $this->renderForm();
     }
 
     protected function _clearCache($template, $cache_id = null, $compile_id = null)
@@ -192,7 +192,7 @@ class Ps_Dataprivacy extends Module
 
         foreach ($languages as $lang) {
             $return['CUSTPRIV_MSG_AUTH'][(int)$lang['id_lang']] = Tools::getValue(
-                'CUSTPRIV_MSG_AUTH_'.(int)$lang['id_lang'],
+                'CUSTPRIV_MSG_AUTH_' . (int)$lang['id_lang'],
                 Configuration::get('CUSTPRIV_MSG_AUTH', (int)$lang['id_lang'])
             );
         }
