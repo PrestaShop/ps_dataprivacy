@@ -29,6 +29,11 @@ if (!defined('_PS_VERSION_')) {
 
 class Ps_Dataprivacy extends Module
 {
+    /**
+     * @var string Name of the module running on PS 1.6.x. Used for data migration.
+     */
+    const PS_16_EQUIVALENT_MODULE = 'blockcustomerprivacy';
+
     protected $templateFile;
 
     public function __construct()
@@ -53,10 +58,18 @@ class Ps_Dataprivacy extends Module
 
     public function install()
     {
-        return parent::install()
+        $result = parent::install()
             && $this->registerHook('additionalCustomerFormFields')
-            && $this->registerHook('actionSubmitAccountBefore')
-            && $this->installFixtures();
+            && $this->registerHook('actionSubmitAccountBefore');
+
+        if (!$result) {
+            return false;
+        }
+        
+        if (!$this->uninstallPrestaShop16Module()) {
+            $this->installFixtures();
+        }
+        return true;
     }
 
     public function uninstall()
@@ -64,6 +77,27 @@ class Ps_Dataprivacy extends Module
         return $this->unregisterHook('additionalCustomerFormFields')
             && $this->unregisterHook('actionBeforeSubmitAccount')
             && parent::uninstall();
+    }
+
+    /**
+     * Migrate data from 1.6 equivalent module (if applicable), then uninstall
+     */
+    public function uninstallPrestaShop16Module()
+    {
+        if (!Module::isInstalled(self::PS_16_EQUIVALENT_MODULE)) {
+            return false;
+        }
+        $oldModule = Module::getInstanceByName(self::PS_16_EQUIVALENT_MODULE);
+        if ($oldModule) {
+            // This closure calls the parent class to prevent data to be erased
+            // It allows the new module to be configured without migration
+            $parentUninstallClosure = function() {
+                return parent::uninstall();
+            };
+            $parentUninstallClosure = $parentUninstallClosure->bindTo($oldModule, get_class($oldModule));
+            $parentUninstallClosure();
+        }
+        return true;
     }
 
     public function getContent()
