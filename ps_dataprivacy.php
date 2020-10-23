@@ -44,7 +44,7 @@ class Ps_Dataprivacy extends Module
 
         $this->displayName = $this->trans('Customer data privacy block', array(), 'Modules.Dataprivacy.Admin');
         $this->description = $this->trans(
-            'Adds a block displaying a message about a customer\'s privacy data.',
+            'Reassure your customers, display a short notice to let them know you care about privacy.',
             array(),
             'Modules.Dataprivacy.Admin'
         );
