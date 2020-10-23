@@ -2,7 +2,7 @@
 
 ## About
 
-Adds a block displaying your data privacy policy for more transparency and reassurance.
+Reassure your customers, display a short notice to let them know you care about privacy.
 
 ## Multistore compatibility
 
