@@ -2,7 +2,7 @@
 <module>
 	<name>ps_dataprivacy</name>
 	<displayName><![CDATA[Customer data privacy block]]></displayName>
-	<version><![CDATA[2.0.2]]></version>
+	<version><![CDATA[2.0.1]]></version>
 	<description><![CDATA[Adds a block displaying your data privacy policy for more transparency and reassurance.]]></description>
 	<author><![CDATA[PrestaShop]]></author>
 	<is_configurable>1</is_configurable>
