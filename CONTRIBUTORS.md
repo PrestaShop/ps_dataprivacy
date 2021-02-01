@@ -1,0 +1,11 @@
+GitHub contributors:
+--------------------------------
+ - MathiasReker
+ - Maxime Biloé
+ - PierreRambaud
+ - Progi1984
+ - aleeks
+ - antoin-m
+ - eternoendless
+ - maximebiloe
+ - yannicka
