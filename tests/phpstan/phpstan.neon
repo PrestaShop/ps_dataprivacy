@@ -5,4 +5,4 @@ parameters:
     # From PHPStan 0.12, paths to check are relative to the neon file
     - ../../ps_dataprivacy.php
   reportUnmatchedIgnoredErrors: false
-  level: 5 
+  level: 5
