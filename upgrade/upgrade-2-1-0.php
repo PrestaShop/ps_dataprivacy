@@ -28,5 +28,5 @@ if (!defined('_PS_VERSION_')) {
 }
 function upgrade_module_2_1_0($object)
 {
-    return $object->unregisterHook('actionBeforeSubmitAccount');
+    return $object->unregisterHook('actionSubmitAccountBefore');
 }
