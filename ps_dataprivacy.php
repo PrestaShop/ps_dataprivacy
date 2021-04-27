@@ -40,7 +40,7 @@ class Ps_Dataprivacy extends Module
     {
         $this->name = 'ps_dataprivacy';
         $this->author = 'PrestaShop';
-        $this->version = '2.0.1';
+        $this->version = '2.1.0';
         $this->need_instance = 0;
 
         $this->bootstrap = true;
@@ -58,9 +58,7 @@ class Ps_Dataprivacy extends Module
 
     public function install()
     {
-        $result = parent::install()
-            && $this->registerHook('additionalCustomerFormFields')
-            && $this->registerHook('actionSubmitAccountBefore');
+        $result = parent::install() && $this->registerHook('additionalCustomerFormFields');
 
         if (!$result) {
             return false;
@@ -76,7 +74,6 @@ class Ps_Dataprivacy extends Module
     public function uninstall()
     {
         return $this->unregisterHook('additionalCustomerFormFields')
-            && $this->unregisterHook('actionBeforeSubmitAccount')
             && parent::uninstall();
     }
 
