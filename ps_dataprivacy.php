@@ -71,12 +71,6 @@ class Ps_Dataprivacy extends Module
         return true;
     }
 
-    public function uninstall()
-    {
-        return $this->unregisterHook('additionalCustomerFormFields')
-            && parent::uninstall();
-    }
-
     /**
      * Migrate data from 1.6 equivalent module (if applicable), then uninstall
      */
@@ -192,14 +186,11 @@ class Ps_Dataprivacy extends Module
             ],
         ];
 
-        $lang = new Language((int) Configuration::get('PS_LANG_DEFAULT'));
-
         $helper = new HelperForm();
         $helper->show_toolbar = false;
         $helper->table = $this->table;
-        $helper->default_form_language = $lang->id;
-        $helper->allow_employee_form_lang =
-            Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') ? Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') : 0;
+        $helper->default_form_language = (int) Configuration::get('PS_LANG_DEFAULT');
+        $helper->allow_employee_form_lang = (int) Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG');
         $helper->identifier = $this->identifier;
         $helper->submit_action = 'submitCustPrivMess';
         $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false) .
