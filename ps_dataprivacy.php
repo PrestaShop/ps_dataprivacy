@@ -34,8 +34,6 @@ class Ps_Dataprivacy extends Module
      */
     const PS_16_EQUIVALENT_MODULE = 'blockcustomerprivacy';
 
-    protected $templateFile;
-
     public function __construct()
     {
         $this->name = 'ps_dataprivacy';
@@ -109,17 +107,10 @@ class Ps_Dataprivacy extends Module
 
             Configuration::updateValue('CUSTPRIV_MSG_AUTH', $message_trads['auth'], true);
 
-            $this->_clearCache('*');
-
             $output .= $this->displayConfirmation($this->trans('The settings have been updated.', [], 'Admin.Notifications.Success'));
         }
 
         return $output . $this->renderForm();
-    }
-
-    protected function _clearCache($template, $cache_id = null, $compile_id = null)
-    {
-        return parent::_clearCache($this->templateFile);
     }
 
     /**
