@@ -62,7 +62,7 @@ class Ps_Dataprivacy extends Module
     public function uninstall()
     {
         return $this->unregisterHook('additionalCustomerFormFields')
-            && $this->unregisterHook('actionBeforeSubmitAccount')
+            && $this->unregisterHook('actionSubmitAccountBefore')
             && parent::uninstall();
     }
 
