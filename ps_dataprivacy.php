@@ -29,13 +29,16 @@ if (!defined('_PS_VERSION_')) {
 
 class Ps_Dataprivacy extends Module
 {
-    protected $templateFile;
+    /**
+     * @var string Name of the module running on PS 1.6.x. Used for data migration.
+     */
+    const PS_16_EQUIVALENT_MODULE = 'blockcustomerprivacy';
 
     public function __construct()
     {
         $this->name = 'ps_dataprivacy';
         $this->author = 'PrestaShop';
-        $this->version = '2.0.1';
+        $this->version = '2.1.0';
         $this->need_instance = 0;
 
         $this->bootstrap = true;
@@ -53,17 +56,39 @@ class Ps_Dataprivacy extends Module
 
     public function install()
     {
-        return parent::install()
-            && $this->registerHook('additionalCustomerFormFields')
-            && $this->registerHook('actionSubmitAccountBefore')
-            && $this->installFixtures();
+        $result = parent::install() && $this->registerHook('additionalCustomerFormFields');
+
+        if (!$result) {
+            return false;
+        }
+
+        if (!$this->uninstallPrestaShop16Module()) {
+            $this->installFixtures();
+        }
+
+        return true;
     }
 
-    public function uninstall()
+    /**
+     * Migrate data from 1.6 equivalent module (if applicable), then uninstall
+     */
+    public function uninstallPrestaShop16Module()
     {
-        return $this->unregisterHook('additionalCustomerFormFields')
-            && $this->unregisterHook('actionBeforeSubmitAccount')
-            && parent::uninstall();
+        if (!Module::isInstalled(self::PS_16_EQUIVALENT_MODULE)) {
+            return false;
+        }
+        $oldModule = Module::getInstanceByName(self::PS_16_EQUIVALENT_MODULE);
+        if ($oldModule) {
+            // This closure calls the parent class to prevent data to be erased
+            // It allows the new module to be configured without migration
+            $parentUninstallClosure = function () {
+                return parent::uninstall();
+            };
+            $parentUninstallClosure = $parentUninstallClosure->bindTo($oldModule, get_class($oldModule));
+            $parentUninstallClosure();
+        }
+
+        return true;
     }
 
     public function getContent()
@@ -82,17 +107,10 @@ class Ps_Dataprivacy extends Module
 
             Configuration::updateValue('CUSTPRIV_MSG_AUTH', $message_trads['auth'], true);
 
-            $this->_clearCache('*');
-
             $output .= $this->displayConfirmation($this->trans('The settings have been updated.', [], 'Admin.Notifications.Success'));
         }
 
         return $output . $this->renderForm();
-    }
-
-    protected function _clearCache($template, $cache_id = null, $compile_id = null)
-    {
-        return parent::_clearCache($this->templateFile);
     }
 
     /**
@@ -159,14 +177,11 @@ class Ps_Dataprivacy extends Module
             ],
         ];
 
-        $lang = new Language((int) Configuration::get('PS_LANG_DEFAULT'));
-
         $helper = new HelperForm();
         $helper->show_toolbar = false;
         $helper->table = $this->table;
-        $helper->default_form_language = $lang->id;
-        $helper->allow_employee_form_lang =
-            Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') ? Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') : 0;
+        $helper->default_form_language = (int) Configuration::get('PS_LANG_DEFAULT');
+        $helper->allow_employee_form_lang = (int) Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG');
         $helper->identifier = $this->identifier;
         $helper->submit_action = 'submitCustPrivMess';
         $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false) .
