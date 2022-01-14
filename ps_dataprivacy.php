@@ -37,6 +37,7 @@ class Ps_Dataprivacy extends Module
     public function __construct()
     {
         $this->name = 'ps_dataprivacy';
+        $this->tab = 'administration';
         $this->author = 'PrestaShop';
         $this->version = '2.1.0';
         $this->need_instance = 0;
