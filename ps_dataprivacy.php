@@ -37,8 +37,9 @@ class Ps_Dataprivacy extends Module
     public function __construct()
     {
         $this->name = 'ps_dataprivacy';
+        $this->tab = 'administration';
         $this->author = 'PrestaShop';
-        $this->version = '2.1.0';
+        $this->version = '2.1.1';
         $this->need_instance = 0;
 
         $this->bootstrap = true;
@@ -125,6 +126,7 @@ class Ps_Dataprivacy extends Module
         $label = $this->trans(
             'Customer data privacy[1][2]%message%[/2]',
             [
+                '_raw' => true,
                 '[1]' => '<br>',
                 '[2]' => '<em>',
                 '%message%' => Configuration::get('CUSTPRIV_MSG_AUTH', $this->context->language->id),
