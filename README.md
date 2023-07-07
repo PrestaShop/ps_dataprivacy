@@ -4,6 +4,10 @@
 
 Reassure your customers, display a short notice to let them know you care about privacy.
 
+## Compatibility
+
+PrestaShop: `1.7.2.0` or later
+
 ## Multistore compatibility
 
 This module is compatible with the multistore :heavy_check_mark: <br/>
